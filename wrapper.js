@@ -69,4 +69,44 @@ app.post('/init', initCheck, (req, res) => {
   }
 })
 
+const channelCheck = [
+  check('expiration').optional().isInt({ min:1 })
+]
+
+app.post('/channel', channelCheck, (req, res) => {
+  try{
+    const errors = validationResult(req)
+    if(!errors.isEmpty())
+      return res.status(422).json({ errors: errors.array() })
+
+    let { expiration } = req.body
+
+    if(!expiration){
+      expiration = 30 //default value of tss channel
+    }
+
+    const tssChannel = spawn("./tss", ["channel", "--channel_expire", expiration])
+
+    tssChannel.stdout.on("data", function (data) {
+      console.log("channel spawnSTDOUT:", data.toString())
+      const success = data.toString().indexOf("channel id: ")
+
+      if(success !== -1){
+       const channelId = data.toString().substring(success+12).trim()
+       return res.status(200).send({channelId: channelId})
+      }else{
+       return res.status(200).send(data.toString())
+      }
+    });
+
+    tssChannel.stderr.on("data", function (data) {
+      console.log("channel spawnSTDERR:", data.toString())
+      if(!res.headersSent)
+        return res.status(500).send(data.toString())
+    });
+  }catch(error){
+    return res.status(500).send(error.message)
+  }
+})
+
 app.listen(port, () => console.log(`Server listening on port ${port}!`))
