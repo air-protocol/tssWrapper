@@ -109,4 +109,41 @@ app.post('/channel', channelCheck, (req, res) => {
   }
 })
 
+const keygenCheck = [
+  check('home').exists().trim().escape(),
+  check('vault').exists().trim().escape(),
+  check('parties').exists().isInt({ min:2 }),
+  check('threshold').exists().isInt({ min:1 }),
+  check('password').exists().trim().isLength({ min:9 }),
+  check('channelPassword').exists().trim().isLength({ min:9 }),
+  check('channelId').exists().trim().escape()
+]
+
+app.post('/keygen', (req, res) => {
+  try{
+    const errors = validationResult(req)
+    if(!errors.isEmpty())
+      return res.status(422).json({ errors: errors.array() })
+
+    res.setTimeout(600000);
+    const { home, vault, parties, threshold, password, channelPassword, channelId } = req.body
+
+    const tssKeygen = spawn("./tss", ["keygen", "--home", "/root/."+home, "--vault_name", vault, "--parties", parties, "--threshold", threshold, "--password", password, "--channel_password", channelPassword, "--channel_id", channelId]);
+
+    tssKeygen.stdout.on("data", function (data) {
+      console.log("keygen spawnSTDOUT:", data.toString())
+    });
+
+    tssKeygen.stderr.on("data", function (data) {//added message print as error
+      console.log("keygen spawnSTDERR:", data.toString())
+      const success = data.toString().indexOf("added tss_")
+
+      if(success !== -1)
+        res.status(200).send("Successfully added tss to bnbcli's default keystore")
+    });
+  }catch(error){
+    return res.status(500).send(error.message)
+  }
+})
+
 app.listen(port, () => console.log(`Server listening on port ${port}!`))
