@@ -3,7 +3,8 @@ const bodyParser = require('body-parser')
 const { check, validationResult, param } = require('express-validator')
 const { spawn } = require('child_process')
 const app = express()
-const port = 3000
+const argv = require('yargs').argv
+const port = argv.port || 3000
 
 const middleware = [
   bodyParser.json(),
