@@ -1,2 +1,17 @@
 node_modules/
 yarn-error.log
+tbnbcli 2
+tssWrapper
+main.go
+node_modules/
+tss.bakbak
+signed.json
+unsigned.json
+wrapper copy.js
+.tss1 
+.tss2 
+.tss3
+.tss1/ 
+.tss2/ 
+.tss3/
+package-lock.json
